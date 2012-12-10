@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>InfiniteFoo</title>
+    <link href="http://netdna.bootstrapcdn.com/twitter-bootstrap/2.1.1/css/bootstrap-combined.min.css" rel="stylesheet">
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js"></script>
+    <script src="http://benpickles.github.com/onScreen/jquery.onscreen.min.js"></script>
+    <script src="https://raw.github.com/padolsey/jQuery-Plugins/master/cross-domain-ajax/jquery.xdomainajax.js"></script>
+</head>
+<body>
+<div class="container">
+    <div id="comics"></div>
+
+<script>
+    var lastDisplayed;
+    var loading = false;
+
+    var imageRegex = new RegExp("http://www.phdcomics.com/comics/archive/.*\.gif");
+    var titleRegex = new RegExp("<title>PHD Comics: (.*)</title>");
+
+    function loadComics(id) {
+        if(!loading){
+            loading = true;
+            var url = 'http://www.phdcomics.com/comics/archive.php?comicid='+id;
+            $.get(url, {}, function(data) {
+                var image = imageRegex.exec(data.responseText);
+                var title = titleRegex.exec(data.responseText)[1];
+                console.log(image);
+                $('<h4/>').text(id + ' : ' + title).appendTo('#comics');
+                lastDisplayed = $('<img/>').appendTo('#comics');
+                lastDisplayed.attr('src', image)
+                        .attr('class', 'img-polaroid')
+                        .attr('data-id', id);
+                // $('<p/>').text(title).appendTo('#comics');
+                loading = false;
+                loadMoreIfNeeded(lastDisplayed);
+            });
+        }
+    }
+
+    function loadMoreIfNeeded(el){
+        var scrollBottom = $(window).scrollTop() + $(window).height();
+        if (scrollBottom + $(window).height()> el.offset().top && el == lastDisplayed){
+            loadComics(parseInt(el.attr('data-id')) + 1);
+        }
+
+
+    }
+
+    $(function() {
+        var id = parseInt(location.hash.slice(1));
+        if ( isNaN(id) ) {
+            id = 1;
+        }
+        loadComics(id);
+        $(window).scroll(function() {
+            loadMoreIfNeeded(lastDisplayed);
+            // TODO : la ligne suivante est lourde
+            location.hash = $('img:onScreen:first').attr('data-id');
+        })
+
+
+    });
+</script>
+
+</div>
+</body>
+</html>
